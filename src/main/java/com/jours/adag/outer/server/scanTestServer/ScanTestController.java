@@ -1,4 +1,4 @@
-package com.jours.adag.server.scanTestServer;
+package com.jours.adag.outer.server.scanTestServer;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class ScanTestController {
 
     /**
-     *
      * @param id ㅁㄴㅇㄹㅁㄴㅇㄹ
      * @return ㅁㄴㅇㄹㅁㄴㅇㄹ
      */

@@ -13,9 +13,9 @@ import java.util.Map;
 public class ClassDoc {
     private String className;
     private String description;
-    private Map<String, FieldDoc> fieldDocs = new HashMap<>();
+    private Map<String, JavaDoc> fieldDocs = new HashMap<>();
 
-    public void addFieldDoc(String fieldName, String summary, String description) {
-        fieldDocs.put(fieldName, new FieldDoc(summary, description));
+    public void addFieldDoc(String fieldName, JavaDoc javaDoc) {
+        fieldDocs.put(fieldName, javaDoc);
     }
 }

@@ -1,4 +1,4 @@
-package com.jours.adag.server;
+package com.jours.adag.outer.server;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -25,7 +25,7 @@ public class TestController {
      *
      * 컨트롤러 메소드 주석 설명 칸입니다~~
      * ~~~~~
-     * @param requestTestEntity
+     * @param requestTestEntity asdfasdf
      * @return
      */
     @Deprecated

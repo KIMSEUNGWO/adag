@@ -1,4 +1,4 @@
-package com.jours.adag.server;
+package com.jours.adag.outer.server;
 
 import lombok.Getter;
 import lombok.Setter;

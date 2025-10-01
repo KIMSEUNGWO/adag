@@ -3,7 +3,6 @@ package com.jours.adag.javadoc;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
-import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.comments.JavadocComment;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,7 +20,7 @@ import java.util.stream.Stream;
 public class JavadocRepository {
 
     private final Map<String, ClassDoc> javadocs = new HashMap<>();
-    private final Map<String, Map<String, FieldDoc>> methodDocs = new HashMap<>();
+    private final Map<String, Map<String, JavaDoc>> methodDocs = new HashMap<>();
     private final JavaParser javaParser = new JavaParser();
 
     @Value("${adag.source-path:src/main/java}")
@@ -35,20 +34,15 @@ public class JavadocRepository {
             return;
         }
 
-        try {
-            parseSourceFiles(sourceDir.toPath());
+        try(Stream<Path> paths = Files.walk(sourceDir.toPath())) {
+            paths.filter(path -> path.toString().endsWith(".java"))
+                    .forEach(this::parseJavaFile);
             System.out.println("Loaded JavaDocs for " + javadocs.size() + " classes");
-        } catch (Exception e) {
+        } catch (IOException e) {
             System.err.println("Failed to parse source files: " + e.getMessage());
         }
     }
 
-    private void parseSourceFiles(Path sourceDir) throws IOException {
-        try (Stream<Path> paths = Files.walk(sourceDir)) {
-            paths.filter(path -> path.toString().endsWith(".java"))
-                .forEach(this::parseJavaFile);
-        }
-    }
 
     private void parseJavaFile(Path javaFile) {
         try {
@@ -73,26 +67,20 @@ public class JavadocRepository {
                     field.getJavadocComment().ifPresent(javadoc -> {
                         field.getVariables().forEach(variable -> {
                             String fieldName = variable.getNameAsString();
-                            String summary = extractSummary(javadoc);
-                            String description = extractDescription(javadoc);
-                            System.out.println("summary = " + summary + " description = " + description);
-                            classDoc.addFieldDoc(fieldName, summary, description);
+                            JavaDoc parse = JavaDocParser.parse(fieldName, javadoc);
+                            classDoc.addFieldDoc(fieldName, parse);
                         });
                     });
                 });
 
                 // 메소드 JavaDoc 추출
-                Map<String, FieldDoc> methodDocMap = new HashMap<>();
+                Map<String, JavaDoc> methodDocMap = new HashMap<>();
                 classDecl.getMethods().forEach(method -> {
                     method.getJavadocComment().ifPresent(javadoc -> {
-                        String methodName = method.getNameAsString();
-                        String summary = extractSummary(javadoc);
-                        String description = extractDescription(javadoc);
 
-                        FieldDoc methodDoc = new FieldDoc();
-                        methodDoc.setSummary(summary);
-                        methodDoc.setDescription(description);
-                        methodDocMap.put(methodName, methodDoc);
+                        String methodName = method.getNameAsString();
+                        JavaDoc parse = JavaDocParser.parse(methodName, javadoc);
+                        methodDocMap.put(methodName, parse);
                     });
                 });
 
@@ -143,7 +131,7 @@ public class JavadocRepository {
         ClassDoc classDoc = javadocs.get(clazz.getName());
         if (classDoc == null) return null;
 
-        FieldDoc fieldDoc = classDoc.getFieldDocs().get(fieldName);
+        JavaDoc fieldDoc = classDoc.getFieldDocs().get(fieldName);
         return fieldDoc != null ? fieldDoc.getSummary() : null;
     }
 
@@ -154,7 +142,7 @@ public class JavadocRepository {
         ClassDoc classDoc = javadocs.get(clazz.getName());
         if (classDoc == null) return null;
 
-        FieldDoc fieldDoc = classDoc.getFieldDocs().get(fieldName);
+        JavaDoc fieldDoc = classDoc.getFieldDocs().get(fieldName);
         return fieldDoc != null ? fieldDoc.getDescription() : null;
     }
 
@@ -170,10 +158,11 @@ public class JavadocRepository {
      * 메소드의 요약 (첫 줄)
      */
     public String getMethodSummary(Class<?> clazz, String methodName) {
-        Map<String, FieldDoc> methods = methodDocs.get(clazz.getName());
+        Map<String, JavaDoc> methods = methodDocs.get(clazz.getName());
         if (methods == null) return null;
 
-        FieldDoc methodDoc = methods.get(methodName);
+        JavaDoc methodDoc = methods.get(methodName);
+        System.out.println("methodDoc = " + methodDoc);
         return methodDoc != null ? methodDoc.getSummary() : null;
     }
 
@@ -181,10 +170,10 @@ public class JavadocRepository {
      * 메소드의 전체 설명
      */
     public String getMethodDescription(Class<?> clazz, String methodName) {
-        Map<String, FieldDoc> methods = methodDocs.get(clazz.getName());
+        Map<String, JavaDoc> methods = methodDocs.get(clazz.getName());
         if (methods == null) return null;
 
-        FieldDoc methodDoc = methods.get(methodName);
+        JavaDoc methodDoc = methods.get(methodName);
         return methodDoc != null ? methodDoc.getDescription() : null;
     }
 }
