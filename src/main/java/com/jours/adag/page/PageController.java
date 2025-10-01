@@ -20,9 +20,10 @@ public class PageController {
 
     @GetMapping("#{apiDocsConfigurer.baseUrl}")
     public String index(Model model) {
-        Map<Class<?>, List<ApiDocInfo>> docs = generator.getDocs();
+        List<ApiDocInfo> docs = generator.getDocs();
+        docs.sort(configurer.getGroupConfigurer().sort());
         model.addAttribute("docs", docs);
-        model.addAttribute("sort", configurer.getGroupConfigurer().readOnly());
+        model.addAttribute("group", configurer.getGroupConfigurer().getType());
         return "docs";
     }
 }

@@ -36,9 +36,7 @@
             border-radius: 8px;
             padding: 12px 20px;
             margin-bottom: 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            text-align: center;
             backdrop-filter: blur(10px);
         }
 
@@ -94,10 +92,6 @@
             border-radius: 12px;
             padding: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-
-        .hidden {
-            display: none;
         }
 
         .api-item {
@@ -224,12 +218,6 @@
             .controller-header h2 {
                 font-size: 1.5rem;
             }
-
-            .sort-info {
-                flex-direction: column;
-                gap: 10px;
-                align-items: flex-start;
-            }
         }
     </style>
 </head>
@@ -237,103 +225,143 @@
     <div class="container">
         <h1>📚 API Documentation</h1>
 
-        <!-- Sort/Group Configuration Info -->
+        <!-- Group Type Info -->
         <div class="sort-info">
             <span>
                 <strong>그룹화:</strong>
-                <span th:text="${sort.type == T(com.jours.adag.config.group.GroupConfigurer.GroupType).CONTROLLER ? '컨트롤러별' : '없음'}">컨트롤러별</span>
-            </span>
-            <span>
-                <strong>정렬:</strong>
-                <span class="sort-badge" th:text="${sort.sortType.name()} + ' (' + ${sort.sort.name()} + ')'">URL (ASC)</span>
+                <span class="sort-badge" th:text="${group == T(com.jours.adag.config.group.GroupConfigurer.GroupType).CONTROLLER ? '컨트롤러별' : '없음'}">없음</span>
             </span>
         </div>
 
-        <!-- Grouped by Controller -->
-        <div id="grouped-view" th:each="entry : ${docs}">
-            <div class="controller">
-                <div class="controller-header">
-                    <h2>
-                        <span th:text="${entry.value[0].tagInfo.tagName}">Tag Name</span>
-                        <span th:if="${entry.value[0].tagInfo.summary}" th:text="' - ' + ${entry.value[0].tagInfo.summary}"></span>
-                    </h2>
-                    <p th:if="${entry.value[0].tagInfo.description}" th:text="${entry.value[0].tagInfo.description}">Controller Description</p>
-                </div>
-
-                <div class="api-list">
-                    <div th:each="api : ${entry.value}" class="api-item">
-                        <!-- API Header -->
-                        <div class="api-header">
-                            <span class="method" th:classappend="${api.method}" th:text="${api.method}">GET</span>
-                            <span class="api-url" th:text="${api.url}">/api/test</span>
-                        </div>
-
-                        <!-- API Description -->
-                        <div th:if="${api.summary}" class="api-description" th:text="${api.summary}">API Summary</div>
-                        <div th:if="${api.description}" class="api-description" th:text="${api.description}">API Description</div>
-
-                        <!-- Path Variables -->
-                        <div th:if="${api.pathVariables != null && !api.pathVariables.isEmpty()}">
-                            <div class="section-title">Path Variables</div>
-                            <div class="param-grid">
-                                <div th:each="pv : ${api.pathVariables}" class="param-item">
-                                    <code th:text="${pv.name}">id</code>
-                                    <span class="param-type" th:text="${pv.type}">Long</span>
-                                    <span th:if="${pv.description}" class="param-desc" th:text="${pv.description}">Description</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Query Parameters -->
-                        <div th:if="${api.queryParams != null && !api.queryParams.isEmpty()}">
-                            <div class="section-title">Query Parameters</div>
-                            <div class="param-grid">
-                                <div th:each="qp : ${api.queryParams}" class="param-item">
-                                    <code th:text="${qp.name}">name</code>
-                                    <span class="param-type" th:text="${qp.type}">String</span>
-                                    <span th:if="${qp.required}" class="required-badge">Required</span>
-                                    <span th:if="${qp.description}" class="param-desc" th:text="${qp.description}">Description</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Request Body -->
-                        <div th:if="${api.requestBody != null}">
-                            <div class="section-title">Request Body</div>
-                            <div class="body-type" th:text="${api.requestBody.type}">RequestDto</div>
-                        </div>
-
-                        <!-- Response Body -->
-                        <div th:if="${api.responseBody != null}">
-                            <div class="section-title">Response Body</div>
-                            <div class="body-type" th:text="${api.responseBody.type}">ResponseDto</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- API Container -->
+        <div id="api-container"></div>
     </div>
 
     <script th:inline="javascript">
-        const groupType = /*[[${sort.type.name()}]]*/ 'CONTROLLER';
+        /*<![CDATA[*/
+        const apiData = /*[[${docs}]]*/ [];
+        const groupType = /*[[${group.name()}]]*/ 'NONE';
 
-        if (groupType === 'NONE') {
-            const container = document.querySelector('.container');
-            const sortInfo = document.querySelector('.sort-info');
-            const controllers = document.querySelectorAll('.controller');
+        // API 아이템 HTML 생성 함수
+        function createApiItemHTML(api) {
+            let html = `
+                <div class="api-item">
+                    <div class="api-header">
+                        <span class="method ${api.method}">${api.method}</span>
+                        <span class="api-url">${api.url}</span>
+                    </div>
+            `;
+
+            if (api.summary) {
+                html += `<div class="api-description">${api.summary}</div>`;
+            }
+            if (api.description) {
+                html += `<div class="api-description">${api.description}</div>`;
+            }
+
+            // Path Variables
+            if (api.pathVariables && api.pathVariables.length > 0) {
+                html += `<div class="section-title">Path Variables</div><div class="param-grid">`;
+                api.pathVariables.forEach(pv => {
+                    html += `
+                        <div class="param-item">
+                            <code>${pv.name}</code>
+                            <span class="param-type">${pv.type}</span>
+                            ${pv.description ? `<span class="param-desc">${pv.description}</span>` : ''}
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+
+            // Query Parameters
+            if (api.queryParams && api.queryParams.length > 0) {
+                html += `<div class="section-title">Query Parameters</div><div class="param-grid">`;
+                api.queryParams.forEach(qp => {
+                    html += `
+                        <div class="param-item">
+                            <code>${qp.name}</code>
+                            <span class="param-type">${qp.type}</span>
+                            ${qp.required ? `<span class="required-badge">Required</span>` : ''}
+                            ${qp.description ? `<span class="param-desc">${qp.description}</span>` : ''}
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+
+            // Request Body
+            if (api.requestBody) {
+                html += `
+                    <div class="section-title">Request Body</div>
+                    <div class="body-type">${api.requestBody.type}</div>
+                `;
+            }
+
+            // Response Body
+            if (api.responseBody) {
+                html += `
+                    <div class="section-title">Response Body</div>
+                    <div class="body-type">${api.responseBody.type}</div>
+                `;
+            }
+
+            html += `</div>`;
+            return html;
+        }
+
+        // 렌더링
+        const container = document.getElementById('api-container');
+
+        if (groupType === 'CONTROLLER') {
+            // 컨트롤러별 그룹화
+            const grouped = {};
+            apiData.forEach(api => {
+                const key = api.tagInfo.controller;
+                if (!grouped[key]) {
+                    grouped[key] = {
+                        tagInfo: api.tagInfo,
+                        apis: []
+                    };
+                }
+                grouped[key].apis.push(api);
+            });
+
+            Object.values(grouped).forEach(group => {
+                const controllerDiv = document.createElement('div');
+                controllerDiv.className = 'controller';
+
+                let headerHTML = `
+                    <div class="controller-header">
+                        <h2>
+                            <span>${group.tagInfo.tagName}</span>
+                            ${group.tagInfo.summary ? `<span> - ${group.tagInfo.summary}</span>` : ''}
+                        </h2>
+                        ${group.tagInfo.description ? `<p>${group.tagInfo.description}</p>` : ''}
+                    </div>
+                    <div class="api-list">
+                `;
+
+                group.apis.forEach(api => {
+                    headerHTML += createApiItemHTML(api);
+                });
+
+                headerHTML += `</div>`;
+                controllerDiv.innerHTML = headerHTML;
+                container.appendChild(controllerDiv);
+            });
+        } else {
+            // NONE - 평탄화 (서버에서 이미 정렬됨)
             const flatList = document.createElement('div');
             flatList.className = 'flat-list';
 
-            controllers.forEach(controller => {
-                const apiItems = controller.querySelectorAll('.api-item');
-                apiItems.forEach(item => {
-                    flatList.appendChild(item.cloneNode(true));
-                });
-                controller.remove();
+            apiData.forEach(api => {
+                flatList.innerHTML += createApiItemHTML(api);
             });
 
             container.appendChild(flatList);
         }
+        /*]]>*/
     </script>
 </body>
 </html>

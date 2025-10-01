@@ -1,12 +1,15 @@
 package com.jours.adag.config.group;
 
+import com.jours.adag.entity.ApiDocInfo;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.Comparator;
 import java.util.function.Consumer;
 
 public class GroupConfigurer {
 
+    @Getter
     private GroupType type = GroupType.NONE;
     private SortTypeConfig sortType = new SortTypeConfig();
 
@@ -28,20 +31,8 @@ public class GroupConfigurer {
         NONE,
     }
 
-    public ReadOnlyGroupConfigurer readOnly() {
-        return new ReadOnlyGroupConfigurer(
-            type,
-            sortType.getSortType(),
-            sortType.getSort()
-        );
+    public Comparator<ApiDocInfo> sort() {
+        return sortType.getSortType().sort(sortType.getSort());
     }
 
-
-    @Getter
-    @AllArgsConstructor
-    public static class ReadOnlyGroupConfigurer {
-        private final GroupType type;
-        private final SortType sortType;
-        private final Sort sort;
-    }
 }

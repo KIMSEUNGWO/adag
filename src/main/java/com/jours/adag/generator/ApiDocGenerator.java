@@ -22,7 +22,7 @@ public class ApiDocGenerator {
     private final ApiDocGeneratorHelper helper;
     private final ApiDocsConfigurer configurer;
     @Getter
-    private Map<Class<?>, List<ApiDocInfo>> docs = new HashMap<>();
+    private List<ApiDocInfo> docs = new ArrayList<>();
 
     public void generateDocs() {
 
@@ -34,10 +34,7 @@ public class ApiDocGenerator {
             if (tagRegistry.isRegistered(beanType)) {
                 ApiDocInfo info = helper.getInfo(beanType, mapping, handlerMethod);
                 info.setTagInfo(tagRegistry.getTagInfo(beanType));
-                if (!docs.containsKey(beanType)) {
-                    docs.put(beanType, new ArrayList<>());
-                };
-                docs.get(beanType).add(info);
+                docs.add(info);
                 System.out.println(info);
             }
 

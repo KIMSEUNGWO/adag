@@ -56,9 +56,19 @@ public class JavaDocParserImpl implements JavaDocParser {
         try {
             CompilationUnit cu = javaParser.parse(javaFile).getResult().orElseThrow();
             cu.findAll(ClassOrInterfaceDeclaration.class).forEach(classDecl -> {
+                // 중첩 클래스 처리: 부모 클래스가 있으면 $ 기호로 연결
                 String className = cu.getPackageDeclaration()
                     .map(pd -> pd.getNameAsString() + ".")
-                    .orElse("") + classDecl.getNameAsString();
+                    .orElse("");
+
+                // 부모 클래스 확인 (중첩 클래스인 경우)
+                if (classDecl.getParentNode().isPresent() &&
+                    classDecl.getParentNode().get() instanceof ClassOrInterfaceDeclaration) {
+                    ClassOrInterfaceDeclaration parent = (ClassOrInterfaceDeclaration) classDecl.getParentNode().get();
+                    className += parent.getNameAsString() + "$" + classDecl.getNameAsString();
+                } else {
+                    className += classDecl.getNameAsString();
+                }
 
                 Class<?> aClass = toClass(className);
                 String description = classDecl.getJavadocComment().map(this::extractDescription).orElse(null);
@@ -96,6 +106,7 @@ public class JavaDocParserImpl implements JavaDocParser {
         try {
             return Class.forName(className);
         } catch (ClassNotFoundException e) {
+            System.err.println("Failed to load class " + className + ": " + e.getMessage());
             return null;
         }
     }

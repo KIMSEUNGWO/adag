@@ -1,6 +1,8 @@
 package com.jours.adag.config.group;
 
+import com.jours.adag.entity.ApiDocInfo;
 import lombok.Getter;
+
 
 @Getter
 public class SortTypeConfig {

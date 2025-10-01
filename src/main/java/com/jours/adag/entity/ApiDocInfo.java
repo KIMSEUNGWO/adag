@@ -1,5 +1,7 @@
 package com.jours.adag.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.jours.adag.config.tag.TagInfo;
 import lombok.Builder;
 import lombok.Getter;
@@ -27,11 +29,19 @@ public class ApiDocInfo {
 
     // 메소드 메타데이터
     private String url;
+
+    @JsonIgnore
     private HttpMethod method;
+
     private List<PathVariableInfo> pathVariables;
     private List<QueryParamInfo> queryParams;
     private RequestBodyInfo requestBody;
     private ResponseBodyInfo responseBody;
     private Set<MediaType> consumes;
     private Set<MediaType> produces;
+
+    @JsonProperty("method")
+    public String getMethodAsString() {
+        return method != null ? method.name() : null;
+    }
 }
