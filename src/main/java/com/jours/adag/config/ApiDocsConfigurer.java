@@ -1,6 +1,6 @@
 package com.jours.adag.config;
 
-import com.jours.adag.config.configEntity.TagRegistry;
+import com.jours.adag.config.tag.TagRegistry;
 import lombok.Builder;
 import lombok.Getter;
 

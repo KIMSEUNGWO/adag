@@ -11,10 +11,6 @@ public class FieldInfo {
     private String name;
     private String type;
     private boolean required;
-    private Integer minLength;
-    private Integer maxLength;
-    private Long minValue;
-    private Long maxValue;
     private List<FieldInfo> nestedFields;  // 중첩 객체용
 
     private String summary;        // JavaDoc 첫 줄 (간단 설명)

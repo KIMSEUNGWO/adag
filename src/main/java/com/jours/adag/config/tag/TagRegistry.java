@@ -1,4 +1,4 @@
-package com.jours.adag.config.configEntity;
+package com.jours.adag.config.tag;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -10,7 +10,7 @@ public class TagRegistry {
     private final Map<Class<?>, TagInfo> registry = new HashMap<>();
 
     public TagRegistry register(Class<?> aClass, String name, String description) {
-        registry.put(aClass, new TagInfo(aClass, name, description));
+        registry.put(aClass, new TagInfo(aClass, aClass.getSimpleName(), name, description));
         return this;
     }
 

@@ -19,10 +19,10 @@ public class ApiDocsTagConfig {
     @Bean
     ApiDocsConfigurer apiDocsConfigurer(ApiDocsConfigurerBuilder builder) {
         builder
-            .setTagRegistry(tagRegistry -> tagRegistry
+            .tag(tagRegistry -> tagRegistry
                 .register(TestController.class, "테스트", "테스트 내용입니다.")
                 .register(ScanTestController.class, "두번째 테스트", "두번째 테스트 내용입니다."))
-            .setBaseUrl("/adag");
+            .baseUrl("/adag");
         return builder.build();
     }
 

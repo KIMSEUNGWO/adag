@@ -5,7 +5,7 @@ import lombok.ToString;
 
 @ToString
 @AllArgsConstructor
-class MetaData {
+public class BlockTag {
 
     private final JavaDocTag tag;
     private final String name;

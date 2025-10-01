@@ -1,8 +1,11 @@
 package com.jours.adag.generator;
 
 import com.jours.adag.entity.*;
-import com.jours.adag.javadoc.JavadocRepository;
+import com.jours.adag.javadoc.BlockTag;
+import com.jours.adag.javadoc.JavaDocService;
+import com.jours.adag.javadoc.parser.FieldDoc;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -21,38 +24,35 @@ import java.util.*;
 @RequiredArgsConstructor
 public class ApiDocGeneratorHelper {
 
-    private final JavadocRepository javadocRepository;
+    private final JavaDocService javaDocService;
 
-    public ApiDocInfo getInfo(RequestMappingInfo mapping, HandlerMethod handlerMethod) {
+    public ApiDocInfo getInfo(Class<?> beanType, RequestMappingInfo mapping, HandlerMethod handlerMethod) {
 
         String url = getUrl(mapping);
-        String httpMethod = getHttpMethod(mapping);
+        HttpMethod httpMethod = getHttpMethod(mapping);
         Set<MediaType> consumes = getContentTypes(mapping);
         Set<MediaType> produces = getProduces(mapping);
-
 
         Method method = handlerMethod.getMethod();
         Parameter[] parameters = method.getParameters();
 
-        Class<?> beanType = handlerMethod.getBeanType();
-        String summary = javadocRepository.getMethodSummary(beanType, method.getName());
-        String description = javadocRepository.getMethodDescription(beanType, method.getName());
+        String summary = javaDocService.getMethodSummary(beanType, method.getName());
+        String description = javaDocService.getMethodDescription(beanType, method.getName());
 
         List<PathVariableInfo> pathVariables = getPathVariables(parameters);
         List<QueryParamInfo> queryParams = getQueryParams(parameters);
-        RequestBodyInfo requestBody = getRequestBodyInfo(parameters);
+        RequestBodyInfo requestBody = getRequestBodyInfo(beanType, method.getName(), parameters);
         ResponseBodyInfo responseBody = getResponseBodyInfo(method);
 
         return ApiDocInfo.builder()
             .url(url)
-            .httpMethod(httpMethod)
+            .method(httpMethod)
             .pathVariables(pathVariables)
             .queryParams(queryParams)
             .requestBody(requestBody)
             .responseBody(responseBody)
             .consumes(consumes)
             .produces(produces)
-            .controllerClass(handlerMethod.getBeanType().getSimpleName())
             .methodName(method.getName())
             .summary(summary)
             .description(description)
@@ -66,9 +66,9 @@ public class ApiDocGeneratorHelper {
         return patterns.isEmpty() ? "" : patterns.iterator().next().getPatternString();
     }
 
-    private String getHttpMethod(RequestMappingInfo mapping) {
+    private HttpMethod getHttpMethod(RequestMappingInfo mapping) {
         Set<RequestMethod> methods = mapping.getMethodsCondition().getMethods();
-        return methods.isEmpty() ? "GET" : methods.iterator().next().name();
+        return methods.isEmpty() ? HttpMethod.GET : methods.iterator().next().asHttpMethod();
     }
 
     private Set<MediaType> getContentTypes(RequestMappingInfo mapping) {
@@ -88,8 +88,9 @@ public class ApiDocGeneratorHelper {
 
                 pathVariables.add(new PathVariableInfo(
                     name,
-                    param.getType().getSimpleName(),
-                    pathVar.required()
+                    param.getType(),
+                    pathVar.required(),
+                    "미완성"
                 ));
             }
         }
@@ -104,30 +105,35 @@ public class ApiDocGeneratorHelper {
                 String name = reqParam.value().isEmpty() ? param.getName() : reqParam.value();
                 queryParams.add(new QueryParamInfo(
                     name,
-                    param.getType().getSimpleName(),
+                    param.getType(),
                     reqParam.required(),
-                    reqParam.defaultValue()
+                    reqParam.defaultValue(),
+                    "미완성"
                 ));
             }
         }
         return queryParams;
     }
 
-    private RequestBodyInfo getRequestBodyInfo(Parameter[] parameters) {
+    private RequestBodyInfo getRequestBodyInfo(Class<?> beanType, String methodName, Parameter[] parameters) {
         RequestBodyInfo requestBody = null;
         for (Parameter param : parameters) {
             RequestBody body = param.getAnnotation(RequestBody.class);
             if (body != null) {
-                requestBody = new RequestBodyInfo(
-                    param.getType().getSimpleName(),
-                    param.getType(),
-                    body.required()
-                );
+                Class<?> type = param.getType();
+                if (isSimpleType(type)) {
+//                    List<BlockTag> blockTags = javaDocService.getBlockTags(beanType, methodName);
+
+                }
+//                requestBody = new RequestBodyInfo(
+//                    param.getType(),
+//                    body.required()
+//                );
             }
         }
         if (requestBody != null) {
             List<FieldInfo> fields = analyzeClassFields(requestBody.getType());
-            requestBody.setFields(fields);
+//            requestBody.setFields(fields);
         }
         return requestBody;
     }
@@ -164,8 +170,7 @@ public class ApiDocGeneratorHelper {
 
         for (Field field : clazz.getDeclaredFields()) {
             // static, transient 필드는 제외
-            if (Modifier.isStatic(field.getModifiers()) ||
-                Modifier.isTransient(field.getModifiers())) {
+            if (Modifier.isStatic(field.getModifiers()) || Modifier.isTransient(field.getModifiers())) {
                 continue;
             }
 
@@ -177,8 +182,8 @@ public class ApiDocGeneratorHelper {
             fieldInfo.setType(fieldType);
 
             // JavaDoc 추출
-            String summary = javadocRepository.getFieldSummary(clazz, fieldName);
-            String description = javadocRepository.getFieldDescription(clazz, fieldName);
+            String summary = javaDocService.getFieldSummary(clazz, fieldName);
+            String description = javaDocService.getFieldDescription(clazz, fieldName);
             fieldInfo.setSummary(summary);
             fieldInfo.setDescription(description);
 
@@ -191,8 +196,7 @@ public class ApiDocGeneratorHelper {
 
             // List, Set 등 컬렉션 타입 처리
             if (isCollectionType(field.getType())) {
-                Type genericType = field.getGenericType();
-                if (genericType instanceof ParameterizedType paramType) {
+                if (field.getGenericType() instanceof ParameterizedType paramType) {
                     Type[] actualTypes = paramType.getActualTypeArguments();
                     if (actualTypes.length > 0 && actualTypes[0] instanceof Class<?> elementType) {
                         if (!isSimpleType(elementType)) {

@@ -25,12 +25,12 @@ public class TestController {
      *
      * 컨트롤러 메소드 주석 설명 칸입니다~~
      * ~~~~~
-     * @param requestTestEntity asdfasdf
+     * @param dkdh asdfasdf
      * @return
      */
     @Deprecated
     @PostMapping("/posttest")
-    public ResponseEntity<ResponseTestEntity> testEntities(@RequestBody RequestTestEntity requestTestEntity) {
+    public ResponseEntity<ResponseTestEntity> testEntities(@RequestBody RequestTestEntity req) {
         ResponseTestEntity entity = new ResponseTestEntity();
         entity.setMessage("테스트~");
         entity.setEntities(List.of(new ResponseTestEntity.Entity("김승우", "인천"), new ResponseTestEntity.Entity("박양립", "부천")));

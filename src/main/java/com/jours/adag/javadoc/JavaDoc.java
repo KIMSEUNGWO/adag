@@ -14,6 +14,6 @@ public class JavaDoc {
     private String name;
     private String summary;
     private String description;
-    private List<MetaData> metaDatas;
+    private List<BlockTag> blockTags;
 
 }

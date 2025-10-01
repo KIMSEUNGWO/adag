@@ -1,6 +1,6 @@
 package com.jours.adag.config;
 
-import com.jours.adag.config.configEntity.TagRegistry;
+import com.jours.adag.config.tag.TagRegistry;
 
 import java.util.function.Consumer;
 
@@ -9,12 +9,12 @@ public class ApiDocsConfigurerBuilder {
     private TagRegistry tagRegistry = new TagRegistry();
     private String baseUrl = "/adag";
 
-    public ApiDocsConfigurerBuilder setTagRegistry(Consumer<TagRegistry> tagRegistryConsumer) {
+    public ApiDocsConfigurerBuilder tag(Consumer<TagRegistry> tagRegistryConsumer) {
         tagRegistryConsumer.accept(tagRegistry);
         return this;
     }
 
-    public ApiDocsConfigurerBuilder setBaseUrl(String baseUrl) {
+    public ApiDocsConfigurerBuilder baseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
         return this;
     }
