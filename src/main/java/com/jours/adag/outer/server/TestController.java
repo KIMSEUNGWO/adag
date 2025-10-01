@@ -9,13 +9,13 @@ import java.util.List;
 @Controller
 public class TestController {
 
-    @GetMapping("/test")
+    @GetMapping("/a/test")
     public String index(@RequestParam(required = false, name = "id", defaultValue = "asdfasdf") String id) {
         return "index";
     }
 
 
-    @GetMapping("/member/{id}/{name}")
+    @GetMapping("/c/member/{id}/{name}")
     public String findByNameAndId(@PathVariable("id") String id, @PathVariable("name") String name) {
         return "ID: " + id + ", name: " + name;
     }
@@ -29,7 +29,7 @@ public class TestController {
      * @return
      */
     @Deprecated
-    @PostMapping("/posttest")
+    @PostMapping("/b/posttest")
     public ResponseEntity<ResponseTestEntity> testEntities(@RequestBody RequestTestEntity req) {
         ResponseTestEntity entity = new ResponseTestEntity();
         entity.setMessage("테스트~");
